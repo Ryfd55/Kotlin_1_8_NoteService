@@ -8,11 +8,7 @@ open class GenericNoteService<T : Any> : ServiceInterface<T> {
     }
 
     override fun delete(id: Long): Boolean {
-        if (elements.containsKey(id)) {
-            return true
-        } else {
-            return false
-        }
+        return elements.containsKey(id)
     }
 }
 
