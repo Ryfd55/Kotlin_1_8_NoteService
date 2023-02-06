@@ -4,5 +4,5 @@ data class Note(
     val text: String = "",
     val privacy: Int = 0,
     val commentPrivacy: Int = 0,
-//    var comments: GenericService<NoteComment> = GenericService()
+    var comments: GenericNoteService<NoteComment> = GenericNoteService()
 )

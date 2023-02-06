@@ -8,14 +8,26 @@ open class GenericNoteService<T : Any> : ServiceInterface<T> {
     }
 
     override fun delete(id: Long): Boolean {
-        return elements.containsKey(id)
+        return if (elements.containsKey(id)) {
+            elements.remove(id)
+             true
+        } else {
+             false
+        }
     }
 }
 
 object NotesService {
     private var notes = GenericNoteService<Note>()
 
+//    private var notes: MutableList<Note> = ArrayList<Note>()
+//    private var comments: MutableList<Comment> = ArrayList<Comment>()
+
     fun addNote(title: String, text: String, privacy: Int = 0, commentPrivacy: Int = 0): Long {
+        println(Note(notes.nextIdNote + 1, title, text, privacy, commentPrivacy))
+        return notes.add(Note(notes.nextIdNote + 1, title, text, privacy, commentPrivacy))
+    }
+    fun deleteNote(title: String, text: String, privacy: Int = 0, commentPrivacy: Int = 0): Long {
         println(Note(notes.nextIdNote + 1, title, text, privacy, commentPrivacy))
         return notes.add(Note(notes.nextIdNote + 1, title, text, privacy, commentPrivacy))
     }
