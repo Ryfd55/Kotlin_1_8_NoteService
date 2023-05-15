@@ -1,10 +1,13 @@
 interface ServiceInterface<T> {
-    fun add (item: T): Long
-//    fun createComment
-    fun delete(id: Long): Boolean
-//    fun deleteComment
-//    fun edit
-//    fun editComment
+    fun add(item: T): Long
+    fun read(): MutableMap<Long, T>
+    fun edit(id: Long, item: T)
+    fun delete(id: Long)
+    //    fun createComment
+
+    //    fun deleteComment
+
+    //    fun editComment
 //    fun get
 //    fun getById
 //    fun getComments
