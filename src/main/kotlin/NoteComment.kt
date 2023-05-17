@@ -3,4 +3,8 @@ data class NoteComment(
     val noteId: Long = 0,
     val text: String,
     val isDeleted: Boolean = false
-)
+){
+    override fun toString(): String {
+        return text
+    }
+}
