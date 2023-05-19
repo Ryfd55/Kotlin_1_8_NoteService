@@ -16,12 +16,6 @@ fun main() {
     noteService.add(noteFourth)
     noteService.get()
 
-//
-//    println("________________________________________")
-//    println("Редактирование комментария")
-//    noteService.editComment(2, NoteComment(text = "Отредактированный комментарий"))
-//    noteService.get()
-
     println()
     println("________________________________________")
     println("Возвращение заметки по id")
@@ -51,17 +45,23 @@ fun main() {
     println()
     println("________________________________________")
     println("Вызов комментариев по номеру заметки")
-    noteService.getComments(3)
+    noteService.getComments(5)
 
     println()
     println("________________________________________")
     println("Редактирование комментария")
     noteService.editComment(1, NoteComment(text = "Отредактированный комментарий"))
-//    noteService.get()
-
-//    noteService.findComment(3)
     noteService.get()
 
+    println()
+    println("________________________________________")
+    println("Удаление комментария по commentId")
+    noteService.deleteComment(1)
+    noteService.get()
 
-//    println(comments)
+    println()
+    println("________________________________________")
+    println("Восстановление комментария по commentId")
+    noteService.restoreComment(1)
+    noteService.get()
 }

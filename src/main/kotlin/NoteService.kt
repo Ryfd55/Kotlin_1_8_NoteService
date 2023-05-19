@@ -2,8 +2,7 @@ import kotlin.collections.flatten
 
 abstract class AbstractNoteService<T : Any> : ServiceInterface<T> {
     var items: MutableMap<Long, T> = mutableMapOf()
-    var deletedElements: MutableMap<Long, T> = mutableMapOf()
-    var nextIndex: Long = 0
+    var noteIndex: Long = 0
     var commentIndex: Long = 0
 
     override fun read(): MutableMap<Long, T> {
@@ -14,21 +13,18 @@ abstract class AbstractNoteService<T : Any> : ServiceInterface<T> {
         return result
     }
 
-
     abstract fun add(note: Note): Long
-    abstract override fun createComment(id: Long, comment: NoteComment)
     abstract fun edit(id: Long, newNote: Note)
+
 }
 
 class NoteService : AbstractNoteService<Note>() {
-
-
     override fun add(item: Note): Long {
-        items[++nextIndex] = item
-        return nextIndex
+        items[++noteIndex] = item
+        return noteIndex
     }
 
-    fun printNotes() {
+    private fun printNotes() {
         val notesMap = read()
         for ((index, note) in notesMap) {
             println("   Заметка #$index  $note")
@@ -36,12 +32,12 @@ class NoteService : AbstractNoteService<Note>() {
         }
     }
 
-    fun get() {
+    override fun get() {
         printNotes()
     }
 
-    fun getById(id: Long) {
-        val note = items[id] ?: throw NoSuchElementException("No note with id $id")
+    override fun getById(id: Long) {
+        val note = items[id] ?: throw exception.NotFoundException("No note with id $id")
         println("  $note")
     }
 
@@ -50,54 +46,85 @@ class NoteService : AbstractNoteService<Note>() {
             val editedNote = item.copy(id = id)
             items[id] = editedNote
         } else {
-            throw IllegalArgumentException("Note with id=$id not found")
+            throw exception.NotFoundException("Note with id=$id not found")
         }
     }
 
     override fun delete(id: Long) {
-        val note = items[id] ?: throw NoSuchElementException("No note with id $id")
-        deletedElements[id] = note
+        items[id] ?: throw exception.NotFoundException("No note with id $id")
         items.remove(id)
     }
 
     override fun createComment(id: Long, comment: NoteComment) {
-        commentIndex += 1
-        val note = items[id] ?: throw NoSuchElementException("No note with id $id")
+        commentIndex++
+        val note = items[id] ?: throw exception.NotFoundException("No note with id $id")
         val noteComments = note.comments[id] ?: mutableListOf()
         val nextCommentId = noteComments.size.toLong() + 1
         val newComment = comment.copy(commentIdInNote = nextCommentId, noteId = id, commentId = commentIndex)
         noteComments.add(newComment)
         note.comments[id] = noteComments
-
     }
 
-    private fun printComments(id: Long): Boolean {
-        val note = items[id]
-        val noteComments = note?.comments?.get(id)
+    private fun printComments(noteId: Long): Boolean {
+        val note = items[noteId]
+        val noteComments = note?.comments?.get(noteId)
         return if (noteComments != null && noteComments.isNotEmpty()) {
-            for (comment in noteComments)
-                println("       #${comment.commentIdInNote} - $comment - commentId: ${comment.commentId}")
+            for (comment in noteComments) {
+                if (!comment.isDeleted)
+                    println("       #${comment.commentIdInNote} - $comment - commentId: ${comment.commentId}")
+            }
             true
+        } else false
+    }
+
+    override fun getComments(id: Long) {
+        if (!printComments(id)) throw exception.NotFoundException("Comment to note #$id not found")
+    }
+
+    override fun editComment(commentId: Long, comment: NoteComment) {
+        if (commentId in 1L..commentIndex) {
+            val editedComment =
+                items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
+            editedComment?.comments?.values?.forEach { comments ->
+                comments.find { it.commentId == commentId }?.text = comment.text
+            }
         } else {
-            false
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
         }
     }
 
-    fun getComments(id: Long) {
-        if (!printComments(id)) println("Комментариев к заметке #$id нет")
-    }
-
-    fun editComment(commentId: Long, newComment: NoteComment) {   // вызов комментария по commentId
-        for ((_, note) in items) {
-            for (comments in note.comments.values) {
-                val comment = comments.find { it.commentId == commentId }
-                if (comment != null) {
-                    val editedComment = newComment.copy(text = newComment.text, commentId = commentId, noteId = newComment)
-                    comments[commentId.toInt()-1] = editedComment
-                    println(11)
-                    println( editedComment.noteId)
+    override fun deleteComment(commentId: Long) {
+        if (commentId in 1L..commentIndex) {
+            val editedComment =
+                items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
+            editedComment?.comments?.values?.forEach { comments ->
+                comments.find { it.commentId == commentId }?.apply {
+                    if (isDeleted) {
+                        throw exception.CommentDeleteException("Comment with commentId=$commentId has already been deleted!")
+                    }
+                    isDeleted = true
                 }
             }
+        } else {
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
+        }
+    }
+
+    override fun restoreComment(commentId: Long) {
+        if (commentId in 1L..commentIndex) {
+            val editedComment =
+                items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
+            editedComment?.comments?.values?.forEach { comments ->
+                comments.find { it.commentId == commentId }?.apply {
+                    if (!isDeleted) {
+                        throw exception.CommentRestoreException("Comment with commentId=$commentId has not been deleted!")
+                    } else {
+                        isDeleted = false
+                    }
+                }
+            }
+        } else {
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
         }
     }
 }
