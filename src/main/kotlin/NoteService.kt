@@ -15,7 +15,6 @@ abstract class AbstractNoteService<T : Any> : ServiceInterface<T> {
 
     abstract fun add(note: Note): Long
     abstract fun edit(id: Long, newNote: Note)
-
 }
 
 class NoteService : AbstractNoteService<Note>() {
@@ -24,7 +23,7 @@ class NoteService : AbstractNoteService<Note>() {
         return noteIndex
     }
 
-    private fun printNotes() {
+    fun printNotes() {
         val notesMap = read()
         for ((index, note) in notesMap) {
             println("   Заметка #$index  $note")
@@ -82,19 +81,21 @@ class NoteService : AbstractNoteService<Note>() {
     }
 
     override fun editComment(commentId: Long, comment: NoteComment) {
-        if (commentId in 1L..commentIndex) {
+        if (!items.containsKey(commentId)) {
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
+        } else {
             val editedComment =
                 items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
             editedComment?.comments?.values?.forEach { comments ->
                 comments.find { it.commentId == commentId }?.text = comment.text
             }
-        } else {
-            throw exception.NotFoundException("Comment with commentId=$commentId not found")
         }
     }
 
     override fun deleteComment(commentId: Long) {
-        if (commentId in 1L..commentIndex) {
+        if (!items.containsKey(commentId)) {
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
+        } else {
             val editedComment =
                 items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
             editedComment?.comments?.values?.forEach { comments ->
@@ -105,13 +106,13 @@ class NoteService : AbstractNoteService<Note>() {
                     isDeleted = true
                 }
             }
-        } else {
-            throw exception.NotFoundException("Comment with commentId=$commentId not found")
         }
     }
 
     override fun restoreComment(commentId: Long) {
-        if (commentId in 1L..commentIndex) {
+        if (!items.containsKey(commentId)) {
+            throw exception.NotFoundException("Comment with commentId=$commentId not found")
+        } else {
             val editedComment =
                 items.values.find { it -> it.comments.values.flatten().any { it.commentId == commentId } }
             editedComment?.comments?.values?.forEach { comments ->
@@ -123,8 +124,6 @@ class NoteService : AbstractNoteService<Note>() {
                     }
                 }
             }
-        } else {
-            throw exception.NotFoundException("Comment with commentId=$commentId not found")
         }
     }
 }
